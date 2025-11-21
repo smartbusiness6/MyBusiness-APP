@@ -89,9 +89,72 @@ export default function RootLayout({children}:{children:LoginResponse}) {
             isLoggedIn ? 
               <ThemeProvider value={DefaultTheme}>
                 <Stack>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false}} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen 
                     name="stock/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="stock/update/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="stock/add" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="rh/add" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="commande/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="commande/add/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="commande/update/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="transaction/add/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="transaction/update/[id]" 
+                    options={{ 
+                      headerShown: true,
+                      header: ()=> <Header/>
+                    }}
+                  />
+                  <Stack.Screen 
+                    name="rh/[id]" 
                     options={{ 
                       headerShown: true,
                       header: ()=> <Header/>

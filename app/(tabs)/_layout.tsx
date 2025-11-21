@@ -3,8 +3,20 @@ import Header from '@/src/components/Header';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
+import { useAuth } from '../_layout';
+import { useEffect, useState } from 'react';
 
 export default function TabLayout() {
+  const [isAdmin,setIsAdmin] = useState<boolean>(false)
+  const {user} = useAuth()
+
+  useEffect(()=>{
+    let userInfo = user?.user
+    if(userInfo?.role.toString() === "ADMIN"){
+      setIsAdmin(true)
+    }
+  },[])
+
   return (
     <Tabs
       screenOptions={{
@@ -38,8 +50,8 @@ export default function TabLayout() {
             </View>
           ),
         }}
-      />
-      <Tabs.Screen
+        />
+        <Tabs.Screen
         name="index"
         options={{
           title: 'Accueil',
@@ -50,8 +62,8 @@ export default function TabLayout() {
           ),
           tabBarLabel: 'Accueil',
         }}
-      />
-      <Tabs.Screen
+        />
+        <Tabs.Screen
         name="finance"
         options={{
           title: 'Finance',
@@ -60,10 +72,10 @@ export default function TabLayout() {
               <MaterialIcons name="account-balance-wallet" size={32} color={focused ? "#fff" : "#888"} />
             </View>
           ),
-          tabBarLabel: 'Finance',
+          tabBarLabel: 'Finance'
         }}
-      />
-      <Tabs.Screen
+        />
+        <Tabs.Screen
         name="rh"
         options={{
           title: 'RH',

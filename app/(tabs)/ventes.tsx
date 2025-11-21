@@ -1,65 +1,61 @@
+// app/(tabs)/ventes.tsx
 import { BASE_URL } from "@/config/config";
+import CommandCard from "@/src/components/CommandCard";
 import { CommandeResponse } from "@/src/interfaces/interfaces";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useAuth } from "../_layout";
-
-interface Vente {
-  id: number;
-  produit: string;
-  prix: number;
-  payed: boolean;
-  quantite?: string;
-}
-
-const seedData: Vente[] = [
-  { id: 1, produit: "Nike Air Force", prix: 40000, payed: true, quantite: "1 pièce" },
-  { id: 2, produit: "T-Shirt", prix: 5000, payed: false, quantite: "4 pièces" },
-  { id: 3, produit: "Pantalon", prix: 10000, payed: false, quantite: "2 pièces" },
-  { id: 4, produit: "Chaussettes", prix: 2000, payed: true, quantite: "100 pièces" },
-];
 
 type FilterType = "all" | "paid" | "pending";
 
-export default function VenteScreen() {
+export default function VentesScreen() {
+  const { user } = useAuth();
+  const [commandes, setCommandes] = useState<CommandeResponse[]>([]);
   const [filteredData, setFilteredData] = useState<CommandeResponse[]>([]);
-  const [searchValue, setSearchValue] = useState<string>("");
+  const [searchValue, setSearchValue] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [commandes,setCommande] = useState<CommandeResponse[]>([])
-  const {user} = useAuth()
+  const [loading, setLoading] = useState(true);
 
+  // Charger les commandes
   useEffect(() => {
-    applyFilterAndSearch(activeFilter, searchValue);
-  }, []);
-
-  useEffect(()=>{
-    fetch(`${BASE_URL}/vente/commande`,{
-      headers:{
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user?.token}`
-      }
-    }).then(async (res:Response)=>{
-      const commandes:CommandeResponse[] = await res.json()
-      setCommande(commandes)
-      setFilteredData(commandes)
-    }).catch((error:any)=>{
-      console.log(error.message)
+    fetch(`${BASE_URL}/vente/commande`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user?.token}`,
+      },
     })
-  },[])
+      .then((res) => res.json())
+      .then((data: CommandeResponse[]) => {
+        setCommandes(data);
+        setFilteredData(data);
+      })
+      .catch((err) => console.log("Erreur chargement commandes:", err))
+      .finally(() => setLoading(false));
+  }, [user?.token]);
 
+  // Filtre + recherche
   const applyFilterAndSearch = (filter: FilterType, search: string) => {
     let filtered = [...commandes];
 
-    // Filtre
-    if (filter === "paid") filtered = filtered.filter((s) => s.factures[0].payed);
-    if (filter === "pending") filtered = filtered.filter((s) => !s.factures[0].payed);
+    if (filter === "paid") filtered = filtered.filter((c) => c.factures[0]?.payed);
+    if (filter === "pending") filtered = filtered.filter((c) => !c.factures[0]?.payed);
 
-    // Recherche
     if (search.trim()) {
-      filtered = filtered.filter((s) =>
-        s.produit.nom.toLowerCase().includes(search.toLowerCase())
+      const query = search.toLowerCase();
+      filtered = filtered.filter((c) =>
+        c.produit.nom.toLowerCase().includes(query) ||
+        c.client?.nom?.toLowerCase().includes(query)
       );
     }
 
@@ -76,98 +72,106 @@ export default function VenteScreen() {
     applyFilterAndSearch(activeFilter, text);
   };
 
-  const getStatusStyle = (payed: boolean) => ({
-    backgroundColor: payed ? "#d4edda" : "#f8d7da",
-    color: payed ? "#155724" : "#721c24",
-  });
+  const paidCount = commandes.filter((c) => c.factures[0]?.payed).length;
+  const pendingCount = commandes.filter((c) => !c.factures[0]?.payed).length;
 
-  const getStatusText = (payed: boolean) => (payed ? "Payée" : "En attente");
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#05aa65" />
+        <Text style={styles.loadingText}>Chargement des ventes...</Text>
+      </View>
+    );
+  }
 
   return (
-          <View style={styles.container}>
-        {/* Barre de recherche */}
-        <View style={styles.searchContainer}>
-          <MaterialIcons name="search" size={24} color="#888" style={styles.searchIcon} />
-          <TextInput
-            placeholder="Rechercher un produit..."
-            style={styles.searchInput}
-            value={searchValue}
-            onChangeText={handleSearch}
-          />
-          {searchValue.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearch("")}>
-              <MaterialIcons name="clear" size={22} color="#888" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Filtres */}
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[styles.filterChip, activeFilter === "all" && styles.filterChipActive]}
-            onPress={() => handleFilter("all")}
-          >
-            <Text style={[styles.filterText, activeFilter === "all" && styles.filterTextActive]}>
-              Tous ({commandes.length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.filterChip, activeFilter === "paid" && styles.filterChipActive]}
-            onPress={() => handleFilter("paid")}
-          >
-            <Text style={[styles.filterText, activeFilter === "paid" && styles.filterTextActive]}>
-              Payés ({commandes.filter((s) => s.factures[0].payed).length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.filterChip, activeFilter === "pending" && styles.filterChipActive]}
-            onPress={() => handleFilter("pending")}
-          >
-            <Text style={[styles.filterText, activeFilter === "pending" && styles.filterTextActive]}>
-              En attente ({commandes.filter((s) => !s.factures[0].payed).length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Liste des ventes */}
-        <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-          {filteredData.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>Aucune vente trouvée</Text>
-            </View>
-          ) : (
-            filteredData.map((vente) => (
-              <View key={vente.id} style={styles.card}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.productImagePlaceholder}>
-                    <MaterialIcons name="shopping-bag" size={28} color="#fff" />
-                  </View>
-                </View>
-
-                <View style={styles.cardContent}>
-                  <View style={styles.cardHeader}>
-                    <Text style={styles.productName}>{vente.produit.nom}</Text>
-                    <Text style={styles.price}>{vente.produit.prixVente.toLocaleString()} Ar</Text>
-                  </View>
-
-                  <Text style={styles.quantity}>{vente.quantite}</Text>
-
-                  <View style={styles.cardFooter}>
-                    <View style={[styles.statusBadge, getStatusStyle(vente.factures[0].payed)]}>
-                      <Text style={styles.statusText}>{getStatusText(vente.factures[0].payed)}</Text>
-                    </View>
-                    <TouchableOpacity style={styles.viewButton}>
-                      <MaterialIcons name="arrow-forward-ios" size={16} color="#666" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            ))
-          )}
-        </ScrollView>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <MaterialIcons name="shopping-bag" size={32} color="#05aa65" />
+        <Text style={styles.title}>Mes Ventes</Text>
       </View>
+
+      {/* Barre de recherche */}
+      <View style={styles.searchContainer}>
+        <MaterialIcons name="search" size={24} color="#888" style={styles.searchIcon} />
+        <TextInput
+          placeholder="Rechercher un produit ou client..."
+          style={styles.searchInput}
+          value={searchValue}
+          onChangeText={handleSearch}
+          placeholderTextColor="#aaa"
+        />
+        {searchValue.length > 0 && (
+          <TouchableOpacity onPress={() => handleSearch("")}>
+            <MaterialIcons name="clear" size={22} color="#888" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Filtres */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[styles.filterChip, activeFilter === "all" && styles.filterChipActive]}
+          onPress={() => handleFilter("all")}
+        >
+          <Text style={[styles.filterText, activeFilter === "all" && styles.filterTextActive]}>
+            Tous ({commandes.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, activeFilter === "paid" && styles.filterChipActive]}
+          onPress={() => handleFilter("paid")}
+        >
+          <MaterialIcons
+            name="check-circle"
+            size={18}
+            color={activeFilter === "paid" ? "#fff" : "#05aa65"}
+            style={styles.filterIcon}
+          />
+          <Text style={[styles.filterText, activeFilter === "paid" && styles.filterTextActive]}>
+            Payées ({paidCount})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.filterChip, activeFilter === "pending" && styles.filterChipActive]}
+          onPress={() => handleFilter("pending")}
+        >
+          <MaterialIcons
+            name="schedule"
+            size={18}
+            color={activeFilter === "pending" ? "#fff" : "#e67e22"}
+            style={styles.filterIcon}
+          />
+          <Text style={[styles.filterText, activeFilter === "pending" && styles.filterTextActive]}>
+            En attente ({pendingCount})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Liste */}
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.list}>
+        {filteredData.length === 0 ? (
+          <View style={styles.emptyState}>
+            <MaterialIcons name="inventory-2" size={64} color="#ddd" />
+            <Text style={styles.emptyTitle}>Aucune vente trouvée</Text>
+            <Text style={styles.emptySubtitle}>
+              {searchValue ? "Essayez une autre recherche" : "Les ventes apparaîtront ici"}
+            </Text>
+          </View>
+        ) : (
+          filteredData.map((commande) => (
+            <CommandCard
+              key={commande.id}
+              vente={commande}
+              viewCommand={() => router.push(`/commande/${commande.id}`)}
+            />
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -175,132 +179,107 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
-    paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+    gap: 12,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#05aa65",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    marginBottom: 20,
-    elevation: 3,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    elevation: 6,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 16,
     fontSize: 16,
     color: "#333",
   },
   filterContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    gap: 12,
     marginBottom: 20,
-    gap: 10,
   },
   filterChip: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: "#e9ecef",
-    borderRadius: 25,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   filterChipActive: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#05aa65",
+  },
+  filterIcon: {
+    marginRight: 4,
   },
   filterText: {
     fontSize: 14,
-    color: "#555",
-    fontWeight: "500",
+    fontWeight: "600",
+    color: "#666",
   },
   filterTextActive: {
     color: "#fff",
   },
   list: {
     flex: 1,
-  },
-  card: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-  },
-  cardLeft: {
-    marginRight: 16,
-  },
-  productImagePlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "#007bff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cardContent: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  productName: {
-    fontSize: 17,
-    fontWeight: "600",
-    color: "#222",
-    flex: 1,
-    marginRight: 10,
-  },
-  price: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#007bff",
-  },
-  quantity: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 4,
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  viewButton: {
-    padding: 6,
+    paddingHorizontal: 16,
   },
   emptyState: {
     alignItems: "center",
-    marginTop: 50,
+    justifyContent: "center",
+    paddingTop: 80,
   },
-  emptyText: {
-    fontSize: 16,
-    color: "#888",
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#999",
+    marginTop: 20,
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: "#bbb",
+    marginTop: 8,
   },
 });

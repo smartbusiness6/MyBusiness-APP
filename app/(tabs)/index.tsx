@@ -1,262 +1,212 @@
-import { navigate } from "expo-router/build/global-state/routing";
+// app/index.tsx
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
-    ScrollView, StyleSheet, Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useAuth } from "../_layout";
+
+const { width } = Dimensions.get("window");
 
 export default function Index() {
+  const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
   return (
     <ScrollView
-      style={{
-        paddingBottom: 20
-      }}
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#05aa65"]} />
+      }
+      showsVerticalScrollIndicator={false}
     >
-      <View style={styles.greetingBox}>
-        <Text style={styles.greetingText}>Bonjour</Text>
-        <Text>Voici un aperçu d'aujourd'hui</Text>
+      {/* Header propre */}
+      <View style={styles.header}>
+        <Text style={styles.greeting}>Bonjour {user?.user.nom || "l'ami"} !</Text>
+        <Text style={styles.subtitle}>Voici votre tableau de bord</Text>
       </View>
-      <TouchableOpacity
-        onPress={()=>navigate("/finance")}
-      >
-        <View style={styles.StatResumeBox}>
-          <View
-            style={{
-              flex: 1,
-              gap : 12,
-              flexDirection:"row",
-              alignItems: "center",
-              justifyContent:"space-around"
-            }}
-          >
-            <Text
-              style={styles.titleText}
-            >Revenus de cette semaine</Text>
-            <View 
-              style={{
-                width: 30,
-                height: 10,
-                borderRadius: 50,
-                backgroundColor: "white"
-              }}
-            ></View>
-          </View>
-          <Text
-            style={styles.bigTitleText}
-          >250 000 Ar</Text>
-          <Text
-            style={styles.coverText}
-          >+18.2% vs la semaine passée</Text>
+
+      {/* Carte Revenus - Exactement comme ton mockup */}
+      <View style={styles.revenueCard}>
+        <View style={styles.revenueHeader}>
+          <Text style={styles.revenueTitle}>Revenus cette semaine</Text>
+          <MaterialIcons name="show-chart" size={24} color="#fff" />
         </View>
-      </TouchableOpacity>
-      <View 
-        style={styles.statsContainer}>
-        <TouchableOpacity
-          onPress={()=>navigate("/ventes")}
-        >
-          <View
-            style={styles.statBox}
-          >
-            <Text
-              style={styles.titleStat}
-            >Ventes aujourd'hui</Text>
-            <Text style={styles.statValue}>0 Ar</Text>
+        <Text style={styles.revenueAmount}>250 000 Ar</Text>
+        <View style={styles.growthBadge}>
+          <MaterialIcons name="arrow-upward" size={16} color="#fff" />
+          <Text style={styles.growthText}>+18.2%</Text>
+        </View>
+      </View>
+
+      {/* 4 cartes stats - Style mockup */}
+      <View style={styles.statsGrid}>
+        {/* Ventes du jour */}
+        <TouchableOpacity style={styles.statCard} onPress={() => router.push("/ventes")}>
+          <View style={styles.statIconContainer}>
+            <MaterialIcons name="receipt-long" size={28} color="#05aa65" />
           </View>
+          <Text style={styles.statLabel}>Ventes du jour</Text>
+          <Text style={styles.statValue}>0 Ar</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={()=>navigate("/ventes")}
-        >
-          <View
-            style={styles.statBox}
-          >
-            <Text
-              style={styles.titleStat}
-            >Commandes</Text>
-            <Text style={styles.statValue}>0</Text>
+
+        {/* Commandes */}
+        <TouchableOpacity style={styles.statCard} onPress={() => router.push("/ventes")}>
+          <View style={styles.statIconContainer}>
+            <MaterialIcons name="shopping-cart" size={28} color="#3498db" />
           </View>
+          <Text style={styles.statLabel}>Commandes</Text>
+          <Text style={styles.statValue}>0</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={()=>navigate("/stock")}
-        >
-          <View 
-            style={styles.statBox}
-          >
-            <Text
-              style={styles.titleStat}
-            >Produits</Text>
-            <Text style={styles.statValue}>20</Text>
+
+        {/* Produits */}
+        <TouchableOpacity style={styles.statCard} onPress={() => router.push("/stock")}>
+          <View style={styles.statIconContainer}>
+            <MaterialIcons name="inventory-2" size={28} color="#05aa65" />
           </View>
+          <Text style={styles.statLabel}>Produits</Text>
+          <Text style={styles.statValue}>20</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={()=>navigate("/stock")}
-        >
-          <View 
-            style={styles.statBox}
-          >
-            <Text
-              style={[styles.titleStat,{color:"red"}]}
-            >Alertes stock</Text>
-            <Text style={[styles.statValue,{color:"red"}]}>5</Text>
+
+        {/* Alertes stock */}
+        <TouchableOpacity style={styles.statCard} onPress={() => router.push("/stock")}>
+          <View style={styles.statIconContainer}>
+            <MaterialIcons name="warning" size={28} color="#e74c3c" />
           </View>
+          <Text style={styles.statLabel}>Alertes stock</Text>
+          <Text style={styles.statValue}>5</Text>
         </TouchableOpacity>
       </View>
-      <View>
-        <h1 style={styles.ListTitle}>Activité récente</h1>
-        <ScrollView 
-          style={{
-            maxHeight: 120
-          }}
-        >
-          <View style={styles.itemList}>
-            <View style={styles.itemSquare}></View>
-            <View style={styles.itemLine}>
-              <Text style={styles.itemTitle}>
-                Facturation vente
-              </Text>
-              <Text style={styles.itemTitle}>
-                Rasolo
-              </Text>
-              <Text style={styles.itemDate}>
-                11/11/25 12:00
-              </Text>
-            </View>
-          </View>
-          <View style={styles.itemList}>
-            <View style={styles.itemSquare}></View>
-            <View style={styles.itemLine}>
-              <Text style={styles.itemTitle}>
-                Approvisionnement 
-              </Text>
-              <Text style={styles.itemTitle}>
-                Rakoto
-              </Text>
-              <Text style={styles.itemDate}>
-                11/11/25 12:00
-              </Text>
-            </View>
-          </View>
-          <View style={styles.itemList}>
-            <View style={styles.itemSquare}></View>
-            <View style={styles.itemLine}>
-              <Text style={styles.itemTitle}>
-                Modif commande
-              </Text>
-              <Text style={styles.itemTitle}>
-                Ravao
-              </Text>
-              <Text style={styles.itemDate}>
-                11/11/25 12:00
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
+
+      {/* Espace pour le FAB en bas */}
+      <View style={{ height: 120 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  greetingBox:{
-    padding: 8,
-    width: "100%"
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
   },
-  greetingText:{
-    fontSize: 22,
-    fontWeight: "bold"
+
+  // Header minimaliste
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: "#fff",
   },
-  StatResumeBox:{
-    padding: 10,
-    borderRadius: 12,
-    width: "90%",
-    alignSelf: "center",
-    marginStart: 5,
-    backgroundColor:"#4ccfb9ff",
-    marginTop: 22
+  greeting: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#2c3e50",
   },
-  titleText:{
-    color: "#FFFFFF",
-    fontWeight: "200",
-    fontSize: 17,
+  subtitle: {
+    fontSize: 16,
+    color: "#7f8c8d",
+    marginTop: 4,
   },
-  bigTitleText:{
-    color: "#FFFFFF",
-    fontSize: 26,
+
+  // Carte revenus - 100% comme ton mockup
+  revenueCard: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    backgroundColor: "#05aa65",
+    borderRadius: 20,
+    padding: 20,
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  revenueHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  revenueTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  revenueAmount: {
+    color: "#fff",
+    fontSize: 34,
     fontWeight: "bold",
     marginTop: 12,
-    marginStart: 15     
   },
-  coverText:{
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "400",
+  growthBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.25)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     marginTop: 12,
-    marginStart: 10,
-    padding: 4,
-    borderRadius: 8,
-    backgroundColor: "#ffffff8e",
+    alignSelf: "flex-start",
   },
-  statsContainer:{
-    flex: 1,
+  growthText: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: 4,
+    fontSize: 14,
+  },
+
+  // Grille de stats - Exactement comme ton mockup
+  statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "center",
+    paddingHorizontal: 10,
     marginTop: 20,
-    gap: 12,
-    width: "100%",
-    padding: 20,
-    justifyContent: "center"
-  },
-  statBox:{
-    width: 140,
-    height: 120,
-    borderRadius:12,
-    borderColor: "black",
-    borderWidth: .2,
-    padding: 12
-  },
-  titleStat:{
-    textAlign:"center",
-    fontWeight:"200",
-    fontFamily:"sans"
-  },
-  statValue:{
-    fontSize: 25,
-    marginTop: 22,
-    textAlign:"center",
-    fontWeight: "bold"
-  },
-  ListTitle:{
-    textAlign:"center",
-    fontWeight: "600",
-    fontSize: 20
-  },
-  itemList:{
-    padding: 4,
-    width: "95%",
-    marginStart: "2.5%",
-    marginTop: 8,
-    flex:1,
-    flexDirection: "row",
     gap: 16,
-    alignItems: "center"
   },
-  itemSquare:{
-    width: 30,
-    height: 10,
-    borderRadius: 22,
-    backgroundColor:"#6b5555ff"
+  statCard: {
+    backgroundColor: "#fff",
+    width: width * 0.44,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
-  itemTitle:{
-    fontWeight: "300",
-    fontSize: 12
+  statIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#f1f8f5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
   },
-  itemLine:{
-    flexDirection:"row",
-    justifyContent: "space-around",
-    width: 290,
-    alignItems:"center"
+  statLabel: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 8,
   },
-  itemDate:{
-    fontSize: 11,
-    fontWeight: "200"
-  }
-})
+  statValue: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#2c3e50",
+    marginTop: 6,
+  },
+});

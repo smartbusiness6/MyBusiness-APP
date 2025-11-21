@@ -2,7 +2,10 @@
 
 # dependencies
 node_modules/
-
+db.db
+db1.db
+db2.db
+drizzle/
 # Expo
 .expo/
 .vscode/

@@ -1,8 +1,9 @@
-import { BASE_URL } from "@/config/config";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useState } from "react";
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { LoginResponse } from "../interfaces/interfaces";
+import { AuthService } from "../services/AuthService";
+import { BASE_URL } from "@/config/config";
 
 
 export default function LoginScreen({ onLogin }: { onLogin: (body:LoginResponse) => void }) {
@@ -36,6 +37,15 @@ export default function LoginScreen({ onLogin }: { onLogin: (body:LoginResponse)
     })
   
   };
+
+  // const handleLogin = ()=>{
+  //     AuthService.login(email,password).then(async (response:LoginResponse)=>{
+  //       const body = response
+  //       if(body){
+  //         onLogin(body)
+  //       }
+  //     })
+  // }
 
   return (
     <View style={styles.loginContainer}>
